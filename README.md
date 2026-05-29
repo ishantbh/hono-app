@@ -1,8 +1,3 @@
-```
-npm install
-npm run dev
-```
+# Hono App
 
-```
-open http://localhost:3000
-```
+Test app exploring hono for backend, replacing express
