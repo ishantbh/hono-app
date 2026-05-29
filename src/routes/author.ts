@@ -4,7 +4,11 @@ import z from 'zod'
 
 const app = new Hono()
 
-const authors = [
+const authors: {
+  id: string
+  name: string
+  birthday?: Date | null
+}[] = [
   {
     id: '1',
     name: 'John',
@@ -19,6 +23,11 @@ const authors = [
 const createAuthorSchema = z.object({
   name: z.string().min(1),
   birthday: z.coerce.date().optional(),
+})
+
+const updateAuthorSchema = z.object({
+  name: z.string().min(1).optional(),
+  birthday: z.coerce.date().nullable().optional(),
 })
 
 app.get('/', (c) => {
@@ -54,6 +63,28 @@ app.post('/', sValidator('json', createAuthorSchema), async (c) => {
   authors.push(author)
 
   return c.json(author, 201)
+})
+
+app.put('/:id', sValidator('json', updateAuthorSchema), (c) => {
+  const { id } = c.req.param()
+
+  const data = c.req.valid('json')
+
+  const author = authors.find((a) => a.id === id)
+
+  if (!author) {
+    return c.json({ error: 'Author not found' }, 404)
+  }
+
+  if (data.name) {
+    author.name = data.name
+  }
+
+  if (data.birthday !== undefined) {
+    author.birthday = data.birthday
+  }
+
+  return c.json(author)
 })
 
 export default app
