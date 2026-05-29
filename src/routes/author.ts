@@ -1,4 +1,6 @@
+import { sValidator } from '@hono/standard-validator'
 import { Hono } from 'hono'
+import z from 'zod'
 
 const app = new Hono()
 
@@ -6,12 +8,18 @@ const authors = [
   {
     id: '1',
     name: 'John',
+    birthday: new Date(),
   },
   {
     id: '2',
     name: 'Jane',
   },
 ]
+
+const createAuthorSchema = z.object({
+  name: z.string().min(1),
+  birthday: z.coerce.date().optional(),
+})
 
 app.get('/', (c) => {
   return c.json(authors)
@@ -29,25 +37,23 @@ app.get('/:id', (c) => {
   return c.json(author)
 })
 
-app.post('/', async (c) => {
+app.post('/', sValidator('json', createAuthorSchema), async (c) => {
+  const data = c.req.valid('json')
+
   const body: { name: string } = await c.req.json()
 
   if (!body?.name) {
     return c.json({ error: 'Name is required' }, 401)
   }
 
-  if (body.name.length < 2) {
-    return c.json({ error: 'Name must be at least 2 characters long' }, 401)
+  const author = {
+    id: crypto.randomUUID(),
+    ...data,
   }
 
-  const newAuthor = {
-    id: authors.length.toString(),
-    name: body.name,
-  }
+  authors.push(author)
 
-  authors.push(newAuthor)
-
-  return c.json(newAuthor, 201)
+  return c.json(author, 201)
 })
 
 export default app
