@@ -2,11 +2,13 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 
 import { env } from './data/env.ts'
+import authRoutes from './routes/auth.ts'
 import authorRoutes from './routes/author.ts'
 
 const app = new Hono()
 
 app.route('/authors', authorRoutes)
+app.route('/auth', authRoutes)
 
 serve(
   {
