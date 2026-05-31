@@ -5,7 +5,7 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'admin'])
 export const UserTable = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
   email: text().notNull().unique(),
-  passwordHash: text().notNull(),
+  passwordHash: text('password_hash').notNull(),
   role: userRoleEnum().notNull().default('user'),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
