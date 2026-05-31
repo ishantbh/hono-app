@@ -86,16 +86,10 @@ app.put('/:id', sValidator('json', updateAuthorSchema), async (c) => {
   return c.json(author)
 })
 
-app.delete('/:id', (c) => {
+app.delete('/:id', async (c) => {
   const { id } = c.req.param()
 
-  const index = authors.findIndex((a) => a.id === id)
-
-  if (index === -1) {
-    return c.json({ error: 'Author not found' }, 404)
-  }
-
-  authors.splice(index, 1)
+  await db.delete(AuthorTable).where(eq(AuthorTable.id, id))
 
   return c.body(null, 204)
 })
