@@ -63,12 +63,7 @@ app.post('/', sValidator('json', createAuthorSchema), async (c) => {
     return c.json({ error: 'Name is required' }, 401)
   }
 
-  const author = {
-    id: crypto.randomUUID(),
-    ...data,
-  }
-
-  authors.push(author)
+  const [author] = await db.insert(AuthorTable).values(data).returning()
 
   return c.json(author, 201)
 })
