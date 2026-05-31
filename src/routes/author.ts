@@ -1,8 +1,10 @@
 import { sValidator } from '@hono/standard-validator'
+import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import z from 'zod'
 
 import { db } from '../db/db.ts'
+import { AuthorTable } from '../db/schema.ts'
 
 const app = new Hono()
 
@@ -38,10 +40,12 @@ app.get('/', async (c) => {
   return c.json(authors)
 })
 
-app.get('/:id', (c) => {
+app.get('/:id', async (c) => {
   const { id } = c.req.param()
 
-  const author = authors.find((a) => a.id === id)
+  const author = await db.query.AuthorTable.findFirst({
+    where: eq(AuthorTable.id, id),
+  })
 
   if (!author) {
     return c.json({ error: 'Author not found' }, 404)
