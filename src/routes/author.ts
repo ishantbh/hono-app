@@ -2,6 +2,8 @@ import { sValidator } from '@hono/standard-validator'
 import { Hono } from 'hono'
 import z from 'zod'
 
+import { db } from '../db/db.ts'
+
 const app = new Hono()
 
 const authors: {
@@ -30,7 +32,9 @@ const updateAuthorSchema = z.object({
   birthday: z.coerce.date().nullable().optional(),
 })
 
-app.get('/', (c) => {
+app.get('/', async (c) => {
+  const authors = await db.query.AuthorTable.findMany()
+
   return c.json(authors)
 })
 
