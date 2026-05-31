@@ -68,23 +68,19 @@ app.post('/', sValidator('json', createAuthorSchema), async (c) => {
   return c.json(author, 201)
 })
 
-app.put('/:id', sValidator('json', updateAuthorSchema), (c) => {
+app.put('/:id', sValidator('json', updateAuthorSchema), async (c) => {
   const { id } = c.req.param()
 
   const data = c.req.valid('json')
 
-  const author = authors.find((a) => a.id === id)
+  const [author] = await db
+    .update(AuthorTable)
+    .set(data)
+    .where(eq(AuthorTable.id, id))
+    .returning()
 
   if (!author) {
     return c.json({ error: 'Author not found' }, 404)
-  }
-
-  if (data.name) {
-    author.name = data.name
-  }
-
-  if (data.birthday !== undefined) {
-    author.birthday = data.birthday
   }
 
   return c.json(author)
