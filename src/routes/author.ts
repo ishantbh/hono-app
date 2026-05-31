@@ -8,22 +8,6 @@ import { AuthorTable } from '../db/schema.ts'
 
 const app = new Hono()
 
-const authors: {
-  id: string
-  name: string
-  birthday?: Date | null
-}[] = [
-  {
-    id: '1',
-    name: 'John',
-    birthday: new Date(),
-  },
-  {
-    id: '2',
-    name: 'Jane',
-  },
-]
-
 const createAuthorSchema = z.object({
   name: z.string().min(1),
   birthday: z.coerce.date().optional(),
