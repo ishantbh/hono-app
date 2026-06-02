@@ -1,4 +1,7 @@
+import { relations } from 'drizzle-orm'
 import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+
+import { ApiKeyTable } from './apiKey.ts'
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin'])
 
@@ -11,3 +14,7 @@ export const UserTable = pgTable('users', {
     .notNull()
     .defaultNow(),
 })
+
+export const userRelations = relations(UserTable, ({ many }) => ({
+  apiKeys: many(ApiKeyTable),
+}))
