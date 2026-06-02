@@ -76,6 +76,7 @@ app.post('/login', sValidator('json', loginSchema), async (c) => {
       email: user.email,
     },
     env.JWT_SECRET,
+    'HS256',
   )
 
   return c.json({ token })
