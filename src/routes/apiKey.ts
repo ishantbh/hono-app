@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { jwt } from 'hono/jwt'
 import { sValidator } from '@hono/standard-validator'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import z from 'zod'
 
 import { env } from '../data/env.ts'
@@ -57,6 +57,17 @@ app.post('/', sValidator('json', createKeySchema), async (c) => {
     })
 
   return c.json({ key: raw, id: apiKey.id }, 201)
+})
+
+app.delete('/:id', async (c) => {
+  const { sub: userId } = c.var.jwtPayload
+  const { id } = c.req.param()
+
+  await db
+    .delete(ApiKeyTable)
+    .where(and(eq(ApiKeyTable.userId, userId), eq(ApiKeyTable.id, id)))
+
+  return c.body(null, 204)
 })
 
 export default app
