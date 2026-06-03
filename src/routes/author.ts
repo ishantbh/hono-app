@@ -1,12 +1,16 @@
+import { Hono } from 'hono'
 import { sValidator } from '@hono/standard-validator'
 import { eq } from 'drizzle-orm'
-import { Hono } from 'hono'
 import z from 'zod'
 
 import { db } from '../db/db.ts'
 import { AuthorTable } from '../db/schema.ts'
+import { apiKeyAuth, type ApiKeyEnv } from '../middleware/auth.ts'
 
 const app = new Hono()
+
+const protectedApp = new Hono<ApiKeyEnv>()
+protectedApp.use(apiKeyAuth)
 
 const createAuthorSchema = z.object({
   name: z.string().min(1),
@@ -38,7 +42,7 @@ app.get('/:id', async (c) => {
   return c.json(author)
 })
 
-app.post('/', sValidator('json', createAuthorSchema), async (c) => {
+protectedApp.post('/', sValidator('json', createAuthorSchema), async (c) => {
   const data = c.req.valid('json')
 
   const body: { name: string } = await c.req.json()
@@ -52,7 +56,7 @@ app.post('/', sValidator('json', createAuthorSchema), async (c) => {
   return c.json(author, 201)
 })
 
-app.put('/:id', sValidator('json', updateAuthorSchema), async (c) => {
+protectedApp.put('/:id', sValidator('json', updateAuthorSchema), async (c) => {
   const { id } = c.req.param()
 
   const data = c.req.valid('json')
@@ -70,12 +74,14 @@ app.put('/:id', sValidator('json', updateAuthorSchema), async (c) => {
   return c.json(author)
 })
 
-app.delete('/:id', async (c) => {
+protectedApp.delete('/:id', async (c) => {
   const { id } = c.req.param()
 
   await db.delete(AuthorTable).where(eq(AuthorTable.id, id))
 
   return c.body(null, 204)
 })
+
+app.route('/', protectedApp)
 
 export default app
