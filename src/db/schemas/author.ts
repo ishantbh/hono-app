@@ -1,4 +1,7 @@
+import { relations } from 'drizzle-orm'
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+
+import { BookTable } from './book.ts'
 
 export const AuthorTable = pgTable('authors', {
   id: uuid().primaryKey().defaultRandom(),
@@ -8,3 +11,7 @@ export const AuthorTable = pgTable('authors', {
     .notNull()
     .defaultNow(),
 })
+
+export const AuthorRelations = relations(AuthorTable, ({ many }) => ({
+  books: many(BookTable),
+}))
