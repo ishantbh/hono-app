@@ -1,6 +1,6 @@
 import { sValidator } from '@hono/standard-validator'
 import { Hono } from 'hono'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import z from 'zod'
 
 import { db } from '../db/db.ts'
@@ -18,6 +18,14 @@ const createBookSchema = z.object({
   publishDate: z.coerce.date().optional(),
   pageCount: z.number().int().positive().optional(),
   authorId: z.uuid(),
+})
+
+const updateBookSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  publishDate: z.coerce.date().nullable().optional(),
+  pageCount: z.number().int().positive().nullable().optional(),
+  authorId: z.uuid().optional(),
 })
 
 app.get('/', async (c) => {
@@ -63,6 +71,41 @@ protectedApp.post('/', sValidator('json', createBookSchema), async (c) => {
     .returning()
 
   return c.json(book, 201)
+})
+
+protectedApp.put('/:id', sValidator('json', updateBookSchema), async (c) => {
+  const { id } = c.req.param()
+
+  const { id: userId, role } = c.var.apiKeyUser
+
+  const data = c.req.valid('json')
+
+  if (data.authorId) {
+    const author = await db.query.AuthorTable.findFirst({
+      where: eq(AuthorTable.id, data.authorId),
+    })
+
+    if (!author) {
+      return c.json({ error: 'Author not found' }, 404)
+    }
+  }
+
+  const whereClause =
+    role === 'admin'
+      ? eq(BookTable.id, id)
+      : and(eq(BookTable.id, id), eq(BookTable.addedBy, userId))
+
+  const [book] = await db
+    .update(BookTable)
+    .set(data)
+    .where(whereClause)
+    .returning()
+
+  if (!book) {
+    return c.json({ error: 'Book not found' }, 404)
+  }
+
+  return c.json(book)
 })
 
 app.route('/', protectedApp)
