@@ -108,6 +108,21 @@ protectedApp.put('/:id', sValidator('json', updateBookSchema), async (c) => {
   return c.json(book)
 })
 
+protectedApp.delete('/:id', async (c) => {
+  const { id } = c.req.param()
+
+  const { id: userId, role } = c.var.apiKeyUser
+
+  const whereClause =
+    role === 'admin'
+      ? eq(BookTable.id, id)
+      : and(eq(BookTable.id, id), eq(BookTable.addedBy, userId))
+
+  await db.delete(BookTable).where(whereClause)
+
+  return c.body(null, 204)
+})
+
 app.route('/', protectedApp)
 
 export default app
